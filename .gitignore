@@ -9,3 +9,12 @@
 __pycache__/
 *.pyc
 *.pyo
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Database files
+*.db
+/instance/
