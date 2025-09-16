@@ -3,6 +3,7 @@ import logging
 import os
 import pathlib
 from multiprocessing import Pool
+from typing import Optional, Union, Dict, List
 
 import librosa.feature
 import numpy as np
@@ -10,7 +11,7 @@ import pandas as pd
 import tensorflow as tf
 
 from assets.models.vae_xprize import VAE
-from embeddings import BaseEmbedding
+from src.embeddings import BaseEmbedding
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -27,7 +28,7 @@ class VAEEmbedding(BaseEmbedding):
     -----------
     model_path : str
         Path where the VAE model will be saved or loaded.
-    data : pd.DataFrame or None
+    data: Optional[pd.DataFrame]
         DataFrame holding the computed spectrograms.
     vae : tensorflow.keras.Model
         The VAE model used to fit the spectrogram data.
@@ -46,14 +47,14 @@ class VAEEmbedding(BaseEmbedding):
             self,
             dataset_name: str,
             clip_duration: float = 3.0,
-            model_path: str or pathlib.Path or None = None,
-            sampling_rate: int or None = None,
-            learning_rate=0.05,
-            batch_size=16,
-            epochs=10,
-            latent_dim=128,
-            beta_kl=1,
-            kw_spectrograms: dict or None = None
+            model_path: Optional[Union[str, pathlib.Path]] = None,
+            sampling_rate: Optional[int] = None,
+            learning_rate: float = 0.05,
+            batch_size: int = 16,
+            epochs: int = 10,
+            latent_dim: int = 128,
+            beta_kl: int = 1,
+            kw_spectrograms: Optional[dict] = None
     ):
         super().__init__(dataset_name, clip_duration, model_path, sampling_rate)
         self.learning_rate = learning_rate
@@ -134,7 +135,7 @@ def _compute_spectrogram(
         resolution: float,
         overlap: float,
         freq_min: float,
-        freq_max: float or None,
+        freq_max: Optional[float],
         n_freqs: int,
         **kwargs
 ):
