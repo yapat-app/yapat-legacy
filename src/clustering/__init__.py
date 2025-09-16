@@ -4,12 +4,13 @@ import uuid
 import pandas as pd
 from sklearn.preprocessing import RobustScaler
 from sqlalchemy import and_
-from src import server, sqlalchemy_db
+from src.app import server
+from src.extensions import sqlalchemy_db
 from sqlalchemy.exc import SQLAlchemyError
-from schema_model import Dataset, EmbeddingResult, ClusteringResult, ClusteringMethod, EmbeddingMethod
+from src.schema_model import Dataset, EmbeddingResult, ClusteringResult, ClusteringMethod, EmbeddingMethod
 
-from extensions import sqlalchemy_db
-from schema_model import Dataset, EmbeddingMethod, EmbeddingResult
+from src.extensions import sqlalchemy_db
+from src.schema_model import Dataset, EmbeddingMethod, EmbeddingResult
 
 
 class BaseClustering:
@@ -118,22 +119,22 @@ class BaseClustering:
 
 def get_clustering_model(method_name: str, *args, **kwargs):
     if method_name == "hdbscan":
-        from clustering.hdbscan import HDBSCANClustering
+        from src.clustering.hdbscan import HDBSCANClustering
         return HDBSCANClustering(*args, **kwargs)
     elif method_name == "dbscan":
-        from clustering.dbscan import DBSCANClustering
+        from src.clustering.dbscan import DBSCANClustering
         return DBSCANClustering(*args, **kwargs)
     elif method_name == "affinity":
-        from clustering.affinity import Affinity
+        from src.clustering.affinity import Affinity
         return Affinity(*args, **kwargs)
     elif method_name == "kmeans":
-        from clustering.kmeans import KMeansClustering
+        from src.clustering.kmeans import KMeansClustering
         return KMeansClustering(*args, **kwargs)
     elif method_name == "spectral":
-        from clustering.spectral import SPECTRALClustering
+        from src.clustering.spectral import SPECTRALClustering
         return SPECTRALClustering(*args, **kwargs)
     elif method_name == "optics":
-        from clustering.optics import OpticsClustering
+        from src.clustering.optics import OpticsClustering
         return OpticsClustering(*args, **kwargs)
     else:
         raise ValueError(f"Unknown Clustering method: {method_name}")

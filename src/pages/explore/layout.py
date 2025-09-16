@@ -3,8 +3,8 @@ import logging
 import dash
 import dash_bootstrap_components as dbc
 from dash import html, dcc, dash_table
-from pages import login_required_layout
-from pages.explore.callbacks import list_existing_methods
+from src.pages import login_required_layout
+from src.pages.explore.callbacks import list_existing_methods
 
 logger = logging.getLogger(__name__)
 

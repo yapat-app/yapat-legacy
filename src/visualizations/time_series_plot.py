@@ -3,7 +3,7 @@ from datetime import datetime
 import calendar
 import plotly.express as px
 
-from visualizations import BaseVisualization
+from src.visualizations import BaseVisualization
 
 
 class TimeSeries(BaseVisualization):

@@ -6,9 +6,9 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sqlalchemy.exc import SQLAlchemyError
 
-from extensions import sqlalchemy_db
-from schema_model import Dataset, EmbeddingResult, EmbeddingMethod, ClusteringMethod, ClusteringResult
-from utils.extensions import server
+from src.extensions import sqlalchemy_db
+from src.schema_model import Dataset, EmbeddingResult, EmbeddingMethod, ClusteringMethod, ClusteringResult
+from src.utils.extensions import server
 
 logger = logging.getLogger(__name__)
 

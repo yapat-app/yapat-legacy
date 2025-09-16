@@ -1,9 +1,9 @@
 import pandas as pd
 from datetime import datetime
 import os
-#from extensions import sqlalchemy_db
-from src import sqlalchemy_db, server
-from schema_model import EmbeddingResult, ClusteringResult, Dataset, EmbeddingMethod, ClusteringMethod, DimReductionMethod, DimReductionResult
+from src.extensions import sqlalchemy_db
+from src.utils.extensions import server
+from src.schema_model import EmbeddingResult, ClusteringResult, Dataset, EmbeddingMethod, ClusteringMethod, DimReductionMethod, DimReductionResult
 from sqlalchemy.exc import SQLAlchemyError
 
 

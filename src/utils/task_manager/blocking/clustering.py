@@ -8,8 +8,8 @@ from sqlalchemy import create_engine, select, and_
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import sessionmaker
 
-from clustering import get_clustering_model
-from schema_model import EmbeddingResult, Dataset, ClusteringResult, ClusteringMethod
+from src.clustering import get_clustering_model
+from src.schema_model import EmbeddingResult, Dataset, ClusteringResult, ClusteringMethod
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)

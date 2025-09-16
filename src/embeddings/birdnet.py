@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 
-from embeddings import BaseEmbedding
+from src.embeddings import BaseEmbedding
 
 
 # BirdNet embedding class that inherits from BaseEmbedding and provides specific implementation for BirdNet.

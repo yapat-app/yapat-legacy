@@ -4,7 +4,7 @@ from flask_login import UserMixin
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, JSON, Boolean
 from sqlalchemy.orm import relationship, backref
 
-from extensions import sqlalchemy_db
+from src.extensions import sqlalchemy_db
 
 
 # Define User model

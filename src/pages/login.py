@@ -3,7 +3,7 @@ import dash
 import dash_bootstrap_components as dbc
 
 # local imports
-from components.login import login_card
+from src.components.login import login_card
 
 dash.register_page(__name__)
 

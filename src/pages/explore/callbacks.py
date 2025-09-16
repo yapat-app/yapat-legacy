@@ -2,21 +2,25 @@ import os
 import json
 from dash import Input, Output, State, callback, callback_context, dcc, html
 
-from utils import get_embedding_model
-from clustering import get_clustering_model
-from dimensionality_reduction import get_dr_model
-from evaluations.embedding_evaluation import EmbeddingsEvaluation
-from evaluations.clustering_evaluation import ClusteringEvaluation
-from visualizations import BaseVisualization
-from visualizations.cluster_temporal_histogram import ClusterTemporalHist
-from visualizations.cluster_time_grid import ClusterTimeGrid
-from visualizations.state_space_visualization import StateSpaceVis
-from visualizations.time_series_plot import TimeSeries
-from visualizations.rose_plot import RosePlot
+from src.utils import get_embedding_model
+from src.clustering import get_clustering_model
+from src.dimensionality_reduction import get_dr_model
+from src.evaluations.embedding_evaluation import EmbeddingsEvaluation
+from src.evaluations.clustering_evaluation import ClusteringEvaluation
+from src.visualizations import BaseVisualization
+from src.visualizations.cluster_temporal_histogram import ClusterTemporalHist
+from src.visualizations.cluster_time_grid import ClusterTimeGrid
+from src.visualizations.state_space_visualization import StateSpaceVis
+from src.visualizations.time_series_plot import TimeSeries
+from src.visualizations.rose_plot import RosePlot
 from dash import Input, Output, State, callback, callback_context
 
-from extensions import sqlalchemy_db
-from schema_model import ClusteringMethod, EmbeddingMethod, DimReductionMethod, Dataset
+from src.extensions import sqlalchemy_db
+from src.schema_model import (
+    ClusteringMethod, ClusteringResult, 
+    EmbeddingMethod, EmbeddingResult,
+    DimReductionMethod, Dataset
+)
 
 pipeline_steps = {
     'embeddings': EmbeddingMethod,
@@ -258,7 +262,7 @@ def process_pipeline_create_click(n_clicks, project_content, list_embedding_meth
     list_clustering_methods = list_clustering_methods if isinstance(list_clustering_methods, list) else [
         list_clustering_methods]
     if callback_context.triggered_id == "create-pipeline":
-        from utils.task_manager import compute_clusters, compute_embeddings
+        from src.utils.task_manager import compute_clusters, compute_embeddings
         compute_embeddings(dataset_name=dataset_name, list_embedding_methods=list_embedding_methods)
         compute_clusters(dataset_name=dataset_name, list_clustering_methods=list_clustering_methods)
 

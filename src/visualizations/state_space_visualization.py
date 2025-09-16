@@ -1,4 +1,4 @@
-from visualizations import BaseVisualization
+from src.visualizations import BaseVisualization
 import plotly.express as px
 
 

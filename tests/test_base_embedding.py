@@ -4,8 +4,8 @@ from unittest.mock import patch
 
 import pandas as pd
 
-from embeddings import BaseEmbedding
-from extensions import dask_client
+from src.embeddings import BaseEmbedding
+from src.extensions import dask_client
 
 
 class TestBaseEmbedding(unittest.TestCase):

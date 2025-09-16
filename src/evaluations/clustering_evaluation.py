@@ -1,7 +1,7 @@
 from sklearn.metrics import silhouette_score, davies_bouldin_score
 from sklearn.cluster import DBSCAN
 
-from evaluations import BaseEvaluation
+from src.evaluations import BaseEvaluation
 
 class ClusteringEvaluation(BaseEvaluation):
     def __init__(self, embedding_method, clustering_method):

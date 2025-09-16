@@ -2,9 +2,9 @@ import logging
 
 from sqlalchemy.exc import SQLAlchemyError
 
-from extensions import sqlalchemy_db
-from schema_model import Dataset
-from utils import server
+from src.extensions import sqlalchemy_db
+from src.schema_model import Dataset
+from src.utils import server
 
 logger = logging.getLogger(__name__)
 

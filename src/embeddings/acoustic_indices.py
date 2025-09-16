@@ -7,7 +7,7 @@ import pandas as pd
 from dask.distributed import Client
 from maad import sound, features
 
-from embeddings import BaseEmbedding
+from src.embeddings import BaseEmbedding
 
 
 def compute_spectral_features(audio_file: np.array, sampling_rate: int, **kwargs) -> pd.DataFrame:
