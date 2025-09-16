@@ -1,0 +1,28 @@
+services:
+  yapat:
+    build: .
+    ports:
+      - "${PORT:-1050}:1050"
+    volumes:
+      # Mount instance directory for persistent data
+      - ./instance:/app/instance
+      # Mount audio storage
+      - ${AUDIO_STORAGE_PATH:-./data/audio}:/app/data/audio
+      # Mount embeddings storage
+      - ${EMBEDDINGS_STORAGE_PATH:-./data/embeddings}:/app/data/embeddings
+      # Mount models (optional)
+      - ${MODEL_PATH:-./models}:/app/models
+    environment:
+      - ENVIRONMENT_FILE=.env
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+      - HOST=0.0.0.0
+      - PORT=1050
+      - DEBUG=true
+      - DEV_TOOLS_PROPS_CHECK=true
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:1050/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
