@@ -138,8 +138,12 @@ def gen_embeddings(project_name, embedding_model):
 
     try:
         if embedding_model == 'birdnet':
-            model = tf.keras.layers.TFSMLayer('assets/models/BirdNET-Analyzer-V2.4/V2.4/BirdNET_GLOBAL_6K_V2.4_Model',
-                                              call_endpoint='embeddings')
+            # Use the repository model path (src/assets/...) to avoid ambiguity when running from project root.
+            model_dir = os.path.join('src', 'assets', 'models', 'birdnet', 'V2.4', 'BirdNET_GLOBAL_6K_V2.4_Model')
+            if not os.path.exists(model_dir):
+                logger.error(f"BirdNET model directory not found at {model_dir}")
+                raise FileNotFoundError(f"BirdNET model directory not found: {model_dir}")
+            model = tf.keras.layers.TFSMLayer(model_dir, call_endpoint='embeddings')
             sr = 48000
         else:
             raise ValueError(f"Unknown embedding model: {embedding_model}")
@@ -281,29 +285,46 @@ def check_audio_path(value):
 @callback(
     Output('embedding-model', 'valid'),
     Output('embedding-model', 'invalid'),
-    Input('embedding-model', 'value')
+    Output('embedding-model', 'options'),
+    Input('embedding-model', 'value'),
+    Input('btn-new-dataset', 'n_clicks'),
+    prevent_initial_call=False  # Allow initial call to populate options
 )
-def check_embedding_model(value):
-    if value:
-        return True, False
-    return False, False
+def check_embedding_model(value, _):
+    from src.pages.explore.callbacks import list_existing_methods, update_db_methods
+    try:
+        # First, ensure methods are registered in DB
+        add_methods = update_db_methods()
+        if add_methods:
+            logger.info(f"Added new embedding methods to DB: {add_methods}")
+            sqlalchemy_db.session.add_all(add_methods)
+            sqlalchemy_db.session.commit()
+        
+        # Get methods from DB
+        methods = list_existing_methods('embeddings')
+        logger.info(f"Available embedding methods: {methods}")
+        
+        # Update options whenever the callback is triggered
+        options = [{'label': method, 'value': method} for method in methods]
+        logger.info(f"Generated dropdown options: {options}")
+        
+        if value:
+            return True, False, options
+        return False, False, options
+    except Exception as e:
+        logger.exception("Error in embedding model callback")
+        # Return empty options but don't break the UI
+        return False, True, []
 
 # layout = html.Div([
 #     html.Label('Select project'),
 #     dcc.Dropdown(
 #         id='dataset-list-dropdown',
 #         options=[{'label': 'True', 'value': 'True'}, {'label': 'False', 'value': 'False'}],
-#         # value=debug_mode
 #     ),
 #
 #     html.H1('Environment Variable Control Panel'),
 #
-#     html.Label('Debug Mode'),
-#     dcc.Dropdown(
-#         id='debug-dropdown',
-#         options=[{'label': 'True', 'value': 'True'}, {'label': 'False', 'value': 'False'}],
-#         # value=debug_mode
-#     ),
 #
 #     html.Label('Database URL'),
 #     dcc.Input(
@@ -333,14 +354,12 @@ def check_embedding_model(value):
 # # @app.callback(
 # #     Output('save-status', 'children'),
 # #     [Input('save-button', 'n_clicks')],
-# #     [State('debug-dropdown', 'value'),
 # #      State('database-url-input', 'value'),
 # #      State('api-key-input', 'value')]
 # # )
-# # def update_env_file(n_clicks, debug_value, db_url_value, api_key_value):
+# # def update_env_file(n_clicks, db_url_value, api_key_value):
 # #     if n_clicks > 0:
 # #         # Update the .env file
-# #         set_key('.env', 'DEBUG', debug_value)
 # #         set_key('.env', 'DATABASE_URL', db_url_value)
 # #         set_key('.env', 'API_KEY', api_key_value)
 # #
