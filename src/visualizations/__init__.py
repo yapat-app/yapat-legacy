@@ -48,7 +48,7 @@ class BaseVisualization:
                     embedding_method = session.query(EmbeddingMethod).filter_by(
                         method_name=self.embedding_method_name).first()
                     embedding_result = session.query(EmbeddingResult).filter_by(
-                        dataset_id=dataset_id, embedding_id=embedding_method.id, task='completed'
+                        dataset_id=dataset_id, embedding_id=embedding_method.id, task_state='completed'
                     ).first()
                     if not embedding_result:
                         embedding_file_path = None
@@ -61,12 +61,12 @@ class BaseVisualization:
                     clustering_method = session.query(ClusteringMethod).filter_by(
                         method_name=self.clustering_method_name).first()
                     clustering_result = session.query(ClusteringResult).filter_by(
-                        embedding_id=embedding_result.id, method_id=clustering_method.method_id, task='completed'
+                        embedding_result_id=embedding_result.id, method_id=clustering_method.id, task_state='completed'
                     ).first()
                     if not clustering_result:
                         clustering_file_path = None
                     else:
-                        clustering_file_path = clustering_result.cluster_file_path
+                        clustering_file_path = clustering_result.file_path
                 else:
                     clustering_file_path = None
 
@@ -74,7 +74,7 @@ class BaseVisualization:
                     dim_red_method = session.query(DimReductionMethod).filter_by(
                         method_name=self.dim_red_method_name).first()
                     dim_red_result = session.query(DimReductionResult).filter_by(
-                        embedding_id=embedding_result.id, method_id=dim_red_method.method_id, task='completed'
+                        clustering_result_id=embedding_result.id, method_id=dim_red_method.method_id, task_state='completed'
                     ).first()
                     if not dim_red_result:
                         dim_red_file_path = None
