@@ -1,7 +1,7 @@
 import pandas as pd
 from sklearn.decomposition import PCA as pca
 
-from dimensionality_reduction import BaseDimensionalityReduction
+from src.dimensionality_reduction import BaseDimensionalityReduction
 
 
 class PCA(BaseDimensionalityReduction):

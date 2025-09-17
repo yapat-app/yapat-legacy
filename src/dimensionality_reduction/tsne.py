@@ -1,7 +1,7 @@
 import pandas as pd
 from sklearn.manifold import TSNE as tsne
 
-from dimensionality_reduction import BaseDimensionalityReduction
+from src.dimensionality_reduction import BaseDimensionalityReduction
 
 
 class TSNE(BaseDimensionalityReduction):

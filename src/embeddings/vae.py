@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 
-from assets.models.vae_xprize import VAE
+from src.assets.models.vae_xprize import VAE
 from src.embeddings import BaseEmbedding
 
 logger = logging.getLogger(__name__)

@@ -14,15 +14,15 @@ def get_embedding_model(method_name, *args, **kwargs):
     - ValueError: If the provided method_name is not recognized.
     """
     if method_name == "birdnet":
-        from embeddings.birdnet import BirdnetEmbedding
+        from src.embeddings.birdnet import BirdnetEmbedding
         return BirdnetEmbedding(*args, **kwargs)
 
     elif method_name == "acoustic_indices":
-        from embeddings.acoustic_indices import AcousticIndices
+        from src.embeddings.acoustic_indices import AcousticIndices
         return AcousticIndices(*args, **kwargs)
 
     elif method_name == "vae":
-        from embeddings.vae import VAEEmbedding
+        from src.embeddings.vae import VAEEmbedding
         return VAEEmbedding(*args, **kwargs)
 
     else:

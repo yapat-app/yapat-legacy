@@ -5,8 +5,8 @@ from unittest.mock import patch
 import numpy as np
 import tensorflow as tf
 
-from assets.models.vae_xprize import VAE
-from embeddings.vae import VAEEmbedding, _compute_spectrogram
+from src.assets.models.vae_xprize import VAE
+from src.embeddings.vae import VAEEmbedding, _compute_spectrogram
 
 
 class TestVAEEmbedding(unittest.TestCase):
