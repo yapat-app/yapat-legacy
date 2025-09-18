@@ -70,7 +70,10 @@ class BaseClustering:
         file_path = sqlalchemy_db.session.execute(
             sqlalchemy_db.select(EmbeddingResult.file_path).where(and_(EmbeddingResult.dataset_id == self.dataset_id,
                                                                        EmbeddingResult.embedding_id == self.embedding_id))
-        )
+        ).scalar_one_or_none()
+
+        if file_path is None:
+            raise ValueError(f"No embedding file found for dataset_id={self.dataset_id} and embedding_id={self.embedding_id}")
 
         if file_path.endswith('.csv'):
             self.data = pd.read_csv(file_path, index_col=0)
@@ -115,6 +118,41 @@ class BaseClustering:
         self.labels = pd.DataFrame(self.clusterer.labels_, columns=['Cluster Label'], index=self.embeddings.index)
         # self.save_labels(self.labels)
         return self.labels
+
+    def save_to_database(self, clustering_method_name: str):
+        """
+        Save clustering results to the database.
+        
+        :param clustering_method_name: Name of the clustering method used
+        """
+        import os
+        import uuid
+        from src.utils.task_manager.blocking.clustering import update_database_clustering_result
+        
+        # Get the embedding result ID
+        embedding_result = sqlalchemy_db.session.execute(
+            sqlalchemy_db.select(EmbeddingResult.id).where(
+                and_(EmbeddingResult.dataset_id == self.dataset_id,
+                     EmbeddingResult.embedding_id == self.embedding_id)
+            )
+        ).scalar_one_or_none()
+        
+        if not embedding_result:
+            raise ValueError(f"No embedding result found for dataset_id={self.dataset_id} and embedding_id={self.embedding_id}")
+        
+        # Save labels to file
+        unique_filename = f"{uuid.uuid4().hex}.pkl"
+        file_path = os.path.join('instance', 'clusters', unique_filename)
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        self.labels.to_pickle(file_path)
+        
+        # Save to database
+        update_database_clustering_result(
+            embedding_result_id=embedding_result,
+            clustering_method=clustering_method_name,
+            filepath=file_path,
+            task_state='completed'
+        )
 
 
 def get_clustering_model(method_name: str, *args, **kwargs):
