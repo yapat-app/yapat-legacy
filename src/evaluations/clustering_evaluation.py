@@ -18,13 +18,19 @@ class ClusteringEvaluation(BaseEvaluation):
 
     def evaluate(self):
         embeddings, cluster_labels = self.load_data()
-        self.scaled_data = self.scale_data(embeddings)
-        sil_score = self.sil_score(self.scaled_data, cluster_labels)
-        db_score = self.db_score(self.scaled_data, cluster_labels)
-        evaluation_results = {
-            "Silhouette Score": sil_score,
-            "Davies Bouldin Score": db_score
-        }
+        if embeddings is not None and cluster_labels is not None:
+            self.scaled_data = self.scale_data(embeddings)
+            sil_score = self.sil_score(self.scaled_data, cluster_labels)
+            db_score = self.db_score(self.scaled_data, cluster_labels)
+            evaluation_results = {
+                "Silhouette Score": sil_score,
+                "Davies Bouldin Score": db_score
+            }
+        else:
+            evaluation_results = {
+                "Silhouette Score": 0.0,
+                "Davies Bouldin Score": 0.0
+            }
         self.save_results('clusters', evaluation_results)
         return
 
