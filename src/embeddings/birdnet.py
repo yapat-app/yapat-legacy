@@ -38,7 +38,7 @@ class BirdnetEmbedding(BaseEmbedding):
             self,
             dataset_name: str,
             clip_duration: float = 3.0,
-            model_path: Optional[Union[str, pathlib.Path]] = os.path.join('assets', 'models', 'birdnet', 'V2.4',
+            model_path: Optional[Union[str, pathlib.Path]] = os.path.join('src', 'assets', 'models', 'birdnet', 'V2.4',
                                                                           'BirdNET_GLOBAL_6K_V2.4_Model'),
             sampling_rate: Optional[int] = None,
     ):
@@ -75,4 +75,6 @@ class BirdnetEmbedding(BaseEmbedding):
             results.append(embedding_array.tolist())
 
         self.embeddings = pd.DataFrame(results, index=self.data.index, columns=[f'embedding_{i}' for i in range(1024)])
+        # Save embeddings to file and database
+        self.save_embeddings('birdnet', self.embeddings)
         return self.embeddings
