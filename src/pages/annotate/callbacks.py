@@ -56,7 +56,7 @@ def get_audio_playback(audio, relayout_data, sample_rate):
 
 def _update_spectrogram(current_sample, project_name):
     # Calculate the spectrogram
-    path_clip = os.path.join('projects', project_name, 'clips', current_sample)
+    path_clip = os.path.join('/app', 'projects', project_name, 'clips', current_sample)
     try:
         audio, sample_rate = librosa.load(path_clip, sr=None)
 
@@ -169,27 +169,58 @@ def register_callbacks():
     def update_species_selection(data, new_class, checklist_options, checklist_value):
         callback_trigger = dash.ctx.triggered_id
         project_name = data.get('project_name')
-
-        path_vocab = os.path.join('projects', project_name, 'vocabulary.txt')
+    
+        # Ensure project directory and base files exist to avoid FileNotFoundError in deployed environments
+        project_dir = os.path.join('/app', 'projects', project_name) if project_name else None
         checklist_options = checklist_options or []
         checklist_value = checklist_value or []
-
+    
+        if project_dir:
+            os.makedirs(project_dir, exist_ok=True)
+            path_vocab = os.path.join(project_dir, 'vocabulary.txt')
+            path_annotations = os.path.join(project_dir, 'annotations.csv')
+    
+            if not os.path.exists(path_vocab):
+                # create an empty vocabulary file
+                with open(path_vocab, 'w') as vf:
+                    vf.write('')
+                logger.warning(f"Created missing vocabulary file at {path_vocab}")
+    
+            if not os.path.exists(path_annotations):
+                # create an empty annotations CSV with correct columns
+                empty_ann = pd.DataFrame(columns=['sound_clip_url', 'label', 'timestamp'])
+                empty_ann.index.name = 'id'
+                empty_ann.to_csv(path_annotations)
+                logger.warning(f"Created missing annotations file at {path_annotations}")
+        else:
+            path_vocab = os.path.join('/app', 'projects', '', 'vocabulary.txt')  # fallback, will not be used if project_name is None
+    
         if callback_trigger == 'new-class':
-            input_text = new_class.strip().capitalize()
+            input_text = (new_class or '').strip().capitalize()
             if input_text:
                 if input_text not in checklist_options:
                     checklist_options.append(input_text)
                 if input_text not in checklist_value:
                     checklist_value.append(input_text)
-                with open(path_vocab, 'a') as f:
-                    f.write(input_text + '\n')
+                # Append new class to vocabulary (file exists because of creation above)
+                try:
+                    with open(path_vocab, 'a') as f:
+                        f.write(input_text + '\n')
+                except Exception as e:
+                    logger.exception(f"Failed to write new class to {path_vocab}: {e}")
         elif callback_trigger == 'project-content':
             current_sample = data.get('current_sample')
-            if current_sample:
-                annotations = pd.read_csv(os.path.join('projects', project_name, 'annotations.csv'), index_col=0)
-                with open(path_vocab, 'r') as f:
-                    lines = f.readlines()
-                checklist_options = [line.strip() for line in lines]
+            if current_sample and project_dir:
+                try:
+                    annotations = pd.read_csv(os.path.join(project_dir, 'annotations.csv'), index_col=0)
+                except Exception:
+                    annotations = pd.DataFrame(columns=['sound_clip_url', 'label', 'timestamp'])
+                try:
+                    with open(path_vocab, 'r') as f:
+                        lines = f.readlines()
+                    checklist_options = [line.strip() for line in lines if line.strip()]
+                except Exception:
+                    checklist_options = []
                 checklist_value = []
 
         # # exclude options that are not searched for
