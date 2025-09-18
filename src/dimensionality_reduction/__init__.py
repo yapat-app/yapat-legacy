@@ -131,23 +131,22 @@ class BaseDimensionalityReduction:
                 reduced_data.to_pickle(reduction_file_path)
 
                 dimred_result = session.query(DimReductionResult).filter_by(
-                    embedding_id=embedding_result.id,
+                    clustering_result_id=embedding_result.id,
                     method_id=dimred_method.method_id
                 ).first()
 
                 if not dimred_result:
                     dimred_result = DimReductionResult(
-                        embedding_id=embedding_result.id,
+                        clustering_result_id=embedding_result.id,
                         method_id=dimred_method.method_id,
                         reduction_file_path=reduction_file_path,
                         hyperparameters={},  # Add relevant hyperparameters if any
-                        task='completed'  # Mark the task as completed after saving
+                        task_state='completed'  # Mark the task as completed after saving
                     )
                     session.add(dimred_result)
                 else:
-                    # Update the existing DimReductionResult with the new file path and status
+                    # Update the existing DimReductionResult with the new file path
                     dimred_result.reduction_file_path = reduction_file_path
-                    dimred_result.task = 'completed'
 
                 # Commit the changes to the database
                 session.commit()
@@ -164,13 +163,13 @@ class BaseDimensionalityReduction:
 
 def get_dr_model(method_name: str, dask_client: Optional[dask.distributed.client.Client] = None):
     if method_name == "pca":
-        from dimensionality_reduction.pca import PCA
+        from src.dimensionality_reduction.pca import PCA
         return PCA()
     elif method_name == "tsne":
-        from dimensionality_reduction.tsne import TSNE
+        from src.dimensionality_reduction.tsne import TSNE
         return TSNE()
     elif method_name == "umap_reducer":
-        from dimensionality_reduction.umap_reducer import UmapReducer
+        from src.dimensionality_reduction.umap_reducer import UmapReducer
         return UmapReducer()
     else:
         raise ValueError(f"Unknown DR method: {method_name}")
