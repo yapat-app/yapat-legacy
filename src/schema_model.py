@@ -117,6 +117,10 @@ class DimReductionResult(sqlalchemy_db.Model):
                                  nullable=False)  # Path to the dimensionality reduction result file
     hyperparameters = Column(JSON,
                              nullable=True)  # Dimensionality reduction hyperparameters stored as JSON
+    evaluation_results = Column(JSON, nullable=True)
+    task_state = Column(String(64), nullable=False)
+    task_key = Column(String(64), unique=True)
+    last_changed = Column(DateTime, default=datetime.utcnow)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # Relationships
