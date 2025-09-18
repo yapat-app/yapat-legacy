@@ -53,22 +53,39 @@ class BaseEvaluation:
         try:
             with server.app_context():
                 selected_dataset = session.query(Dataset).filter_by(is_selected=True).first()
+                if not selected_dataset:
+                    return
+                    
                 dataset_id = selected_dataset.id
                 embedding_method = session.query(EmbeddingMethod).filter_by(
                     method_name=self.embedding_method_name).first()
+                if not embedding_method:
+                    return
+                    
                 embedding_result = sqlalchemy_db.session.query(EmbeddingResult).filter_by(
                     dataset_id=dataset_id,
                     embedding_id=embedding_method.id
                 ).one_or_none()
+                
+                if not embedding_result:
+                    return
+                    
                 if indicator_evaluation == 'embeddings':
                     embedding_result.evaluation_results = json.dumps(evaluation_results)
                 elif indicator_evaluation == 'clusters':
                     clustering_method = session.query(ClusteringMethod).filter_by(
                         method_name=self.clustering_method_name).first()
+                    if not clustering_method:
+                        return
+                        
                     clustering_result = sqlalchemy_db.session.query(ClusteringResult).filter_by(
-                        method_id=clustering_method.method_id,
-                        embedding_id=embedding_result.id
-                    ).one_or_none()
+                        method_id=clustering_method.id,
+                        embedding_result_id=embedding_result.id
+                    ).first()
+                    
+                    if not clustering_result:
+                        return
+                        
                     clustering_result.evaluation_results = json.dumps(evaluation_results)
                 session.commit()
 
@@ -83,12 +100,18 @@ class BaseEvaluation:
         try:
             with server.app_context():
                 selected_dataset = session.query(Dataset).filter_by(is_selected=True).first()
+                if not selected_dataset:
+                    return None, None
+                    
                 dataset_id = selected_dataset.id
                 if self.embedding_method_name:
                     embedding_method = session.query(EmbeddingMethod).filter_by(
                         method_name=self.embedding_method_name).first()
+                    if not embedding_method:
+                        return None, None
+                        
                     embedding_result = session.query(EmbeddingResult).filter_by(
-                        dataset_id=dataset_id, embedding_id=embedding_method.id, task='completed'
+                        dataset_id=dataset_id, embedding_id=embedding_method.id, task_state='completed'
                     ).first()
                     if not embedding_result:
                         embedding_file_path = None
@@ -98,15 +121,21 @@ class BaseEvaluation:
                     embedding_file_path = None
 
                 if self.clustering_method_name:
+                    if not embedding_result:
+                        return embedding_file_path, None
+                        
                     clustering_method = session.query(ClusteringMethod).filter_by(
                         method_name=self.clustering_method_name).first()
+                    if not clustering_method:
+                        return embedding_file_path, None
+                        
                     clustering_result = session.query(ClusteringResult).filter_by(
-                        embedding_id=embedding_result.id, method_id=clustering_method.method_id, task='completed'
+                        embedding_result_id=embedding_result.id, method_id=clustering_method.id, task_state='completed'
                     ).first()
                     if not clustering_result:
                         clustering_file_path = None
                     else:
-                        clustering_file_path = clustering_result.cluster_file_path
+                        clustering_file_path = clustering_result.file_path
                 else:
                     clustering_file_path = None
 
@@ -114,4 +143,5 @@ class BaseEvaluation:
 
         except SQLAlchemyError as e:
             session.rollback()
-            return f"Error querying the database: {e}"
+            logger.error(f"Database error in check_pipeline_completion: {e}")
+            return None, None
