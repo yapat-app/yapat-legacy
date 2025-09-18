@@ -18,3 +18,20 @@ __pycache__/
 # Database files
 *.db
 /instance/
+
+# Ignore audio files
+*.wav
+*.mp3
+*.flac
+*.aac
+*.ogg
+
+# Ignore pickle files (generated data)
+*.pkl
+*.pickle
+
+# Ignore projects directory (contains generated audio clips and data)
+/projects/
+
+# Ignore results directory (contains generated analysis results)
+/results/
