@@ -70,7 +70,7 @@ def serve_layout():
                 data={'project_name': '', 'current_sample': ''},
                 storage_type='session'
             ),
-            dbc.Container(dash.page_container, class_name='my-2'),
+            dbc.Container(dash.page_container, class_name='my-2', style={'padding-bottom': '100px'}),
             footer.layout
         ]
     )

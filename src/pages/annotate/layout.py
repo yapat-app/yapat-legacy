@@ -40,7 +40,7 @@ def layout():
                     ), justify='center',
                 ),
                 dbc.Row([
-                    html.H5('Next sample:', className='mt-5'),
+                    html.H5('Next sample:', className='mt-5 mb-3'),
                     html.Div([
                         dbc.RadioItems(
                             id="retrieval-method", className="btn-group", inputClassName="btn-check",
@@ -55,9 +55,9 @@ def layout():
                             ],
                             value="explore",
                         )
-                    ], className="radio-group my-3")
-                ]),
-            ], width='8'),
+                    ], className="radio-group my-3 mb-4")
+                ], className='mb-4'),
+            ], width='8', className='mb-5'),
             dbc.Col([
                 dbc.Row([
                     html.Div([
