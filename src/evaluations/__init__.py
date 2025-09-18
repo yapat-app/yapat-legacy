@@ -49,15 +49,14 @@ class BaseEvaluation:
         return filename.split('_')[0]
 
     def save_results(self, indicator_evaluation, evaluation_results):
-        session = sqlalchemy_db.session
         try:
             with server.app_context():
-                selected_dataset = session.query(Dataset).filter_by(is_selected=True).first()
+                selected_dataset = sqlalchemy_db.session.query(Dataset).filter_by(is_selected=True).first()
                 if not selected_dataset:
                     return
                     
                 dataset_id = selected_dataset.id
-                embedding_method = session.query(EmbeddingMethod).filter_by(
+                embedding_method = sqlalchemy_db.session.query(EmbeddingMethod).filter_by(
                     method_name=self.embedding_method_name).first()
                 if not embedding_method:
                     return
@@ -73,7 +72,7 @@ class BaseEvaluation:
                 if indicator_evaluation == 'embeddings':
                     embedding_result.evaluation_results = json.dumps(evaluation_results)
                 elif indicator_evaluation == 'clusters':
-                    clustering_method = session.query(ClusteringMethod).filter_by(
+                    clustering_method = sqlalchemy_db.session.query(ClusteringMethod).filter_by(
                         method_name=self.clustering_method_name).first()
                     if not clustering_method:
                         return
@@ -87,13 +86,11 @@ class BaseEvaluation:
                         return
                         
                     clustering_result.evaluation_results = json.dumps(evaluation_results)
-                session.commit()
+                sqlalchemy_db.session.commit()
 
         except Exception as e:
-            session.rollback()
+            sqlalchemy_db.session.rollback()
             logger.error(f"Failed to save results: {e}")
-        finally:
-            session.close()
 
     def check_pipeline_completion(self):
         session = sqlalchemy_db.session

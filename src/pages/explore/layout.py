@@ -124,6 +124,10 @@ def layout():
                     # Status Box
                     dbc.Row([
                         html.Div(id='status-box', children="", style={'marginTop': '20px'})
+                    ]),
+                    # Progress Bar (hidden by default)
+                    dbc.Row([
+                        html.Div(id='progress-container', children="", style={'marginTop': '10px', 'display': 'none'})
                     ])
                 ], width=2),
 

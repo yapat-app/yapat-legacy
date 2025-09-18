@@ -206,6 +206,7 @@ def extract_evaluation_results():
     _evaluation_cache = data
     _cache_timestamp = current_time
     
+    
     return data
 
 @callback(
@@ -261,17 +262,20 @@ def toggle_load_modal(n_load, n_cancel, n_confirm, is_open):
 
 @callback(
     Output("evaluation-table", "data"),
+    Output("progress-container", "style", allow_duplicate=True),
     [Input("url", "pathname"),
      Input("new-confirm", "n_clicks"),
      Input("load-confirm", "n_clicks")],
     [State("new-methods-embedding", "value"),
      State("new-methods-clustering", "value"),
      State("new-methods-dimred-viz", "value")],
-    prevent_initial_call=False
+    prevent_initial_call=True
 )
 def fetch_evaluation_data(pathname, n_clicks, load_clicks, m_e, m_c, m_dv):
     """Fetch evaluation data"""
     from dash import callback_context
+    import dash_bootstrap_components as dbc
+    from dash import html
     
     triggered = callback_context.triggered_id if callback_context.triggered else None
     
@@ -279,51 +283,111 @@ def fetch_evaluation_data(pathname, n_clicks, load_clicks, m_e, m_c, m_dv):
     if n_clicks and n_clicks > 0 and triggered == "new-confirm":
         selected_dataset = sqlalchemy_db.session.query(Dataset).filter_by(is_selected=True).first()
         if not selected_dataset:
-            return extract_evaluation_results()
+            return extract_evaluation_results(), "No dataset selected"
         
         dataset_name = selected_dataset.dataset_name
         
         if m_e:
             clear_evaluation_cache()
             embedding_method = m_e[0] if isinstance(m_e, list) else m_e
+            
+            # Show embedding processing status
+            embedding_status = dbc.Alert(
+                f"Processing embeddings with {embedding_method}...", 
+                color="info", 
+                className="d-flex align-items-center"
+            )
+            
             embedding_instance = get_embedding_model(embedding_method, dataset_name)
             embedding_instance.process()
             evaluation_instance = EmbeddingsEvaluation(embedding_method, None)
             evaluation_instance.evaluate()
+            
+            # Add a small delay to ensure database commit
+            import time
+            time.sleep(0.5)
+            
             data = extract_evaluation_results()
+            
             if m_c:
                 clustering_method = m_c[0] if isinstance(m_c, list) else m_c
+                
+                # Show clustering processing status
+                clustering_status = dbc.Alert(
+                    f"Processing clustering with {clustering_method}...", 
+                    color="info", 
+                    className="d-flex align-items-center"
+                )
+                
                 clustering_instance = get_clustering_model(clustering_method, dataset_name=dataset_name, embedding_method=embedding_method)
                 clustering_instance.embeddings = clustering_instance.load_data()
                 clustering_instance.fit_predict()
                 clustering_instance.save_to_database(clustering_method)
                 evaluation_instance = ClusteringEvaluation(embedding_method, clustering_method)
                 evaluation_instance.evaluate()
+                
+                # Add a small delay to ensure database commit
+                time.sleep(0.5)
+                
                 data = extract_evaluation_results()
+            
             if m_dv:
                 dim_reduction_method = m_dv[0] if isinstance(m_dv, list) else m_dv
+                
+                # Show dimensionality reduction processing status
+                dimred_status = dbc.Alert(
+                    f"Processing dimensionality reduction with {dim_reduction_method}...", 
+                    color="info", 
+                    className="d-flex align-items-center"
+                )
+                
                 dim_reduction_instance = get_dr_model(dim_reduction_method)
                 dim_reduction_instance.fit_transform(embedding_method)
-            return data
-        return extract_evaluation_results()
+            
+            # Show completion status with detailed steps
+            steps_completed = []
+            if m_e:
+                steps_completed.append(f"✓ Embeddings ({embedding_method})")
+            if m_c:
+                steps_completed.append(f"✓ Clustering ({clustering_method})")
+            if m_dv:
+                steps_completed.append(f"✓ Dimensionality Reduction ({dim_reduction_method})")
+            
+            completion_msg = dbc.Alert(
+                [
+                    html.H6("Pipeline creation completed successfully!", className="mb-2"),
+                    html.P("Steps completed:", className="mb-1"),
+                    html.Ul([html.Li(step) for step in steps_completed], className="mb-2"),
+                    html.P(f"Found {len(data)} evaluation records.", className="mb-0")
+                ],
+                color="success",
+                className="d-flex flex-column align-items-start"
+            )
+            
+            # Debug: Print data to console
+            print(f"DEBUG: Evaluation data after pipeline creation: {data}")
+            
+            return data, {'marginTop': '10px', 'display': 'none'}
+        
+        return extract_evaluation_results(), {'marginTop': '10px', 'display': 'none'}
     
     # Handle load pipeline
     if load_clicks and load_clicks > 0 and triggered == "load-confirm":
-        return extract_evaluation_results()
+        return extract_evaluation_results(), {'marginTop': '10px', 'display': 'none'}
     
     # Handle page load to /explore
     if pathname == '/explore' and (triggered == "url" or not triggered):
         clear_evaluation_cache()
         data = extract_evaluation_results()
-        return data
+        return data, {'marginTop': '10px', 'display': 'none'}
     
     # Default case - return empty data
-    return []
+    return [], {'marginTop': '10px', 'display': 'none'}
 
 
 @callback(
     Output('loaded-figures-store', 'data'),
-    Output('status-box', 'children'),
+    Output('status-box', 'children', allow_duplicate=True),
     Input('load-confirm', 'n_clicks'),
     State("load-methods-embedding", "value"),
     State("load-methods-clustering", "value"),
@@ -391,6 +455,132 @@ def update_visualization_content(active_tab, figures_data):
         figure_component = html.Div(f"Figure not available for '{active_tab}'. This visualization may have failed to load.")
 
     return figure_component, ""
+
+
+@callback(
+    Output('status-box', 'children', allow_duplicate=True),
+    Input('new-confirm', 'n_clicks'),
+    State("new-methods-embedding", "value"),
+    State("new-methods-clustering", "value"),
+    State("new-methods-dimred-viz", "value"),
+    prevent_initial_call=True
+)
+def update_pipeline_creation_status(n_clicks, m_e, m_c, m_dv):
+    """Update status during pipeline creation"""
+    if n_clicks and n_clicks > 0:
+        import dash_bootstrap_components as dbc
+        from dash import html
+        
+        # Create initial status message with progress steps
+        steps = []
+        if m_e:
+            steps.append("1. Processing embeddings...")
+        if m_c:
+            steps.append("2. Processing clustering...")
+        if m_dv:
+            steps.append("3. Processing dimensionality reduction...")
+        
+        initial_status = dbc.Alert(
+            [
+                html.Div([
+                    dbc.Spinner(size="sm", color="primary", spinner_class_name="me-2"),
+                    html.Div([
+                        html.P("Pipeline creation started...", className="mb-1"),
+                        html.P("Steps to complete:", className="mb-1"),
+                        html.Ul([html.Li(step) for step in steps], className="mb-0")
+                    ])
+                ], className="d-flex align-items-start")
+            ],
+            color="info"
+        )
+        
+        return initial_status
+    
+    return ""
+
+
+@callback(
+    Output('status-box', 'children', allow_duplicate=True),
+    Input('evaluation-table', 'data'),
+    State('new-confirm', 'n_clicks'),
+    prevent_initial_call=True
+)
+def update_completion_status(table_data, n_clicks):
+    """Update status when pipeline creation is complete"""
+    if n_clicks and n_clicks > 0 and table_data:
+        import dash_bootstrap_components as dbc
+        from dash import html
+        
+        # Count non-zero values in the data
+        non_zero_count = 0
+        for row in table_data:
+            for key, value in row.items():
+                if key != 'metric' and value != 0 and value != '0' and value != 'N/A':
+                    non_zero_count += 1
+        
+        completion_msg = dbc.Alert(
+            [
+                html.H6("Pipeline creation completed successfully!", className="mb-2"),
+                html.P(f"Found {len(table_data)} evaluation metrics with {non_zero_count} data points.", className="mb-0")
+            ],
+            color="success",
+            className="d-flex flex-column align-items-start"
+        )
+        
+        return completion_msg
+    
+    return ""
+
+
+@callback(
+    Output('new-confirm', 'disabled'),
+    Output('new-cancel', 'disabled'),
+    Input('new-confirm', 'n_clicks'),
+    prevent_initial_call=True
+)
+def disable_buttons_during_processing(n_clicks):
+    """Disable buttons during pipeline processing"""
+    if n_clicks and n_clicks > 0:
+        return True, True  # Disable both buttons
+    return False, False  # Enable both buttons
+
+
+@callback(
+    Output('progress-container', 'children'),
+    Output('progress-container', 'style'),
+    Input('new-confirm', 'n_clicks'),
+    prevent_initial_call=True
+)
+def show_progress_bar(n_clicks):
+    """Show/hide progress bar during pipeline creation"""
+    if n_clicks and n_clicks > 0:
+        import dash_bootstrap_components as dbc
+        
+        progress_bar = dbc.Progress(
+            value=0,
+            striped=True,
+            animated=True,
+            color="primary",
+            className="mb-3"
+        )
+        
+        return progress_bar, {'marginTop': '10px', 'display': 'block'}
+    
+    return "", {'marginTop': '10px', 'display': 'none'}
+
+
+@callback(
+    Output('evaluation-table', 'data', allow_duplicate=True),
+    Input('new-confirm', 'n_clicks'),
+    prevent_initial_call=True
+)
+def refresh_evaluation_table_after_creation(n_clicks):
+    """Refresh evaluation table after pipeline creation"""
+    if n_clicks and n_clicks > 0:
+        # Clear cache to force fresh data retrieval
+        clear_evaluation_cache()
+        return extract_evaluation_results()
+    return []
 
 
 @callback(
