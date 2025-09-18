@@ -6,10 +6,14 @@ services:
     volumes:
       # Mount instance directory for persistent data
       - ./instance:/app/instance
+      # Mount projects directory for datasets
+      - ./projects:/app/projects
       # Mount audio storage
       - ${AUDIO_STORAGE_PATH:-./data/audio}:/app/data/audio
       # Mount embeddings storage
       - ${EMBEDDINGS_STORAGE_PATH:-./data/embeddings}:/app/data/embeddings
+      # Mount results directory for embedding and clustering files
+      - ./results:/app/results
       # Mount models (optional)
       - ${MODEL_PATH:-./models}:/app/models
     environment:
