@@ -13,7 +13,8 @@ from sqlalchemy.orm import sessionmaker
 
 from src.schema_model import Dataset, EmbeddingMethod, EmbeddingResult
 from src.utils import glob_audio_dataset
-from src.utils.extensions import server, sqlalchemy_db
+from src.extensions import sqlalchemy_db
+from src.utils.extensions import server
 
 logger = logging.getLogger(__name__)
 
@@ -175,22 +176,6 @@ class BaseEmbedding:
         if not self.list_of_audio_files:
             raise ValueError("No audio files found in the dataset.")
 
-            # if self.dask_client is not None:
-            #     dfs_audio = self.dask_client.map(
-            #         _split_audio_into_chunks,
-            #         self.list_of_audio_files,
-            #         [self.clip_duration] * len(self.list_of_audio_files),
-            #         [self.sampling_rate] * len(self.list_of_audio_files)
-            #     )
-            #     self.data = pd.concat(self.dask_client.gather(dfs_audio))
-            # else:
-            #     # Process audio files locally if no Dask client is provided
-            #     with Pool() as pool:
-            #         dfs_audio = pool.starmap(
-            #             _split_audio_into_chunks,
-            #             [(path_audio_file, self.clip_duration, self.sampling_rate) for path_audio_file in
-            #              self.list_of_audio_files]
-            #         )
         dfs_audio = [_split_audio_into_chunks(path_audio_file, self.clip_duration, self.sampling_rate) for
                      path_audio_file in self.list_of_audio_files]
         self.data = pd.concat(dfs_audio)
@@ -220,10 +205,37 @@ class BaseEmbedding:
                     embedding_id=embedding_method.id
                 ).first()
 
-                if existing_entry:
+                if existing_entry and os.path.exists(existing_entry.file_path):
                     logger.warning(
                         f"Embeddings for dataset ID {selected_dataset.id} and embedding method ID {embedding_method.id} already exist. Skipping save.")
                     return
+                elif existing_entry and not os.path.exists(existing_entry.file_path):
+                    logger.warning(
+                        f"Database entry exists but file is missing. Recreating embeddings file.")
+                    # Check if there are clustering results that reference this embedding result
+                    from src.schema_model import ClusteringResult, DimReductionResult
+                    clustering_results = sqlalchemy_db.session.query(ClusteringResult).filter_by(
+                        embedding_result_id=existing_entry.id
+                    ).all()
+                    
+                    if clustering_results:
+                        logger.warning(f"Found {len(clustering_results)} clustering results that reference this embedding. Deleting them first.")
+                        for clustering_result in clustering_results:
+                            # Also check for dimensionality reduction results that reference this clustering result
+                            dim_reduction_results = sqlalchemy_db.session.query(DimReductionResult).filter_by(
+                                clustering_result_id=clustering_result.id
+                            ).all()
+                            
+                            if dim_reduction_results:
+                                logger.warning(f"Found {len(dim_reduction_results)} dimensionality reduction results that reference clustering result {clustering_result.id}. Deleting them first.")
+                                for dim_reduction_result in dim_reduction_results:
+                                    sqlalchemy_db.session.delete(dim_reduction_result)
+                            
+                            sqlalchemy_db.session.delete(clustering_result)
+                    
+                    # Delete the database entry so we can recreate it
+                    sqlalchemy_db.session.delete(existing_entry)
+                    sqlalchemy_db.session.commit()
 
                 os.makedirs('results', exist_ok=True)
                 embedding_file_path = os.path.join('results',
@@ -250,7 +262,7 @@ class BaseEmbedding:
                 hyperparameters={},  # Optionally add hyperparameters here
                 evaluation_results={},  # Optionally add evaluation results here
                 created_at=pd.Timestamp.now(),
-                task='completed'
+                task_state='completed'
             )
             from src.extensions import sqlalchemy_db
             sqlalchemy_db.session.add(embedding_result)
