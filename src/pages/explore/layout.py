@@ -94,8 +94,12 @@ def layout():
 
     layout = dbc.Container([
         html.Div([
+            # URL component for page navigation
+            dcc.Location(id='url', refresh=False),
             # Store for loaded figures
             dcc.Store(id='loaded-figures-store', data={}),
+            # Store for loading state
+            dcc.Store(id='evaluation-loading-store', data=False),
             # Header
             dbc.Row([
                 html.H2("Visualization Pipelines"),
@@ -127,14 +131,16 @@ def layout():
                 dbc.Col([
                     dbc.Row([
                         html.H5("Evaluation Metrics"),
-                        dash_table.DataTable(
-                            id='evaluation-table',
-                            columns=columns,
-                            data=data,
-                            merge_duplicate_headers=True,  # This will merge headers like 'birdnet' in one line
-                            style_table={'overflowX': 'auto'},
-                            style_cell={'textAlign': 'center'}
-                        ),
+                        html.Div(id='evaluation-table-container', children=[
+                            dash_table.DataTable(
+                                id='evaluation-table',
+                                columns=columns,
+                                data=data,
+                                merge_duplicate_headers=True,  # This will merge headers like 'birdnet' in one line
+                                style_table={'overflowX': 'auto'},
+                                style_cell={'textAlign': 'center'}
+                            )
+                        ]),
                     ], class_name='my-4'),
                     dbc.Row([
                         # html.H5('Visualize results'),
