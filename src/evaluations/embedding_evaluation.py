@@ -34,25 +34,50 @@ class EmbeddingsEvaluation(BaseEvaluation):
         y_time = embeddings['Time']
         y_location = embeddings['Location']
 
-        X_train, X_test, y_time_train, y_time_test = train_test_split(X, y_time, test_size=0.2, random_state=42)
-        _, _, y_location_train, y_location_test = train_test_split(X, y_location, test_size=0.2, random_state=42)
-
-        svc_time = self.model.fit(X_train, y_time_train)
-        svc_location = self.model.fit(X_train, y_location_train)
-
-        y_time_pred = svc_time.predict(X_test)
-        y_location_pred = svc_location.predict(X_test)
-
-        results = {
-            'f1_score_time': f1_score(y_time_test, y_time_pred, average='weighted'),
-            'f1_score_location': f1_score(y_location_test, y_location_pred, average='weighted'),
-            'accuracy_time': accuracy_score(y_time_test, y_time_pred),
-            'accuracy_location': accuracy_score(y_location_test, y_location_pred)
-        }
+        # Check if we have enough classes for classification
+        unique_time_classes = len(y_time.unique())
+        unique_location_classes = len(y_location.unique())
+        
+        results = {}
+        
+        # Only train time classifier if we have more than 1 time class
+        if unique_time_classes > 1:
+            X_train, X_test, y_time_train, y_time_test = train_test_split(X, y_time, test_size=0.2, random_state=42)
+            svc_time = self.model.fit(X_train, y_time_train)
+            y_time_pred = svc_time.predict(X_test)
+            results.update({
+                'f1_score_time': f1_score(y_time_test, y_time_pred, average='weighted'),
+                'accuracy_time': accuracy_score(y_time_test, y_time_pred)
+            })
+        else:
+            results.update({
+                'f1_score_time': 0.0,
+                'accuracy_time': 0.0
+            })
+        
+        # Only train location classifier if we have more than 1 location class
+        if unique_location_classes > 1:
+            X_train, X_test, y_location_train, y_location_test = train_test_split(X, y_location, test_size=0.2, random_state=42)
+            svc_location = self.model.fit(X_train, y_location_train)
+            y_location_pred = svc_location.predict(X_test)
+            results.update({
+                'f1_score_location': f1_score(y_location_test, y_location_pred, average='weighted'),
+                'accuracy_location': accuracy_score(y_location_test, y_location_pred)
+            })
+        else:
+            results.update({
+                'f1_score_location': 0.0,
+                'accuracy_location': 0.0
+            })
+        
         return results
 
     def calculate_entropy(self, data):
-        return calculate_entropy(data)
+        # Set k to be smaller than the number of samples to avoid assertion error
+        k = min(3, len(data) - 1)  # Use k=3 or number of samples - 1, whichever is smaller
+        if k <= 0:
+            return 0.0  # Return 0 if we don't have enough samples
+        return calculate_entropy(data, k=k)
 
     def calculate_explained_variance(self, data):
         pca = PCA(n_components=None)  # Use all components
@@ -67,7 +92,7 @@ class EmbeddingsEvaluation(BaseEvaluation):
     def evaluate(self):
 
         embeddings, _ = self.load_data()
-        if not embeddings.empty:
+        if embeddings is not None and not embeddings.empty:
             self.scaled_data = self.scale_data(embeddings)
             entropy_result = self.calculate_entropy(self.scaled_data)
             explained_variance_result = self.calculate_explained_variance(self.scaled_data)
