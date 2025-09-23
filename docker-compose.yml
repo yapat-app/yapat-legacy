@@ -4,26 +4,21 @@ services:
     ports:
       - "${PORT:-1050}:1050"
     volumes:
-      # Mount instance directory for persistent data
       - ./instance:/app/instance
-      # Mount projects directory for datasets
       - ./projects:/app/projects
-      # Mount audio storage
       - ${AUDIO_STORAGE_PATH:-./data/audio}:/app/data/audio
-      # Mount embeddings storage
       - ${EMBEDDINGS_STORAGE_PATH:-./data/embeddings}:/app/data/embeddings
-      # Mount results directory for embedding and clustering files
       - ./results:/app/results
-      # Mount models (optional)
       - ${MODEL_PATH:-./models}:/app/models
+    env_file:
+      - .env
     environment:
-      - ENVIRONMENT_FILE=.env
       - PYTHONPATH=/app
       - PYTHONUNBUFFERED=1
       - HOST=0.0.0.0
       - PORT=1050
-      - DEBUG=true
-      - DEV_TOOLS_PROPS_CHECK=true
+      - DEBUG=false
+      - DEV_TOOLS_PROPS_CHECK=false
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:1050/health"]
