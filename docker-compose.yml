@@ -10,6 +10,7 @@ services:
       - ${EMBEDDINGS_STORAGE_PATH:-./data/embeddings}:/app/data/embeddings
       - ./results:/app/results
       - ${MODEL_PATH:-./models}:/app/models
+      - ./.env:/app/.env  
     env_file:
       - .env
     environment:
