@@ -10,6 +10,8 @@ services:
       - ${EMBEDDINGS_STORAGE_PATH:-./data/embeddings}:/app/data/embeddings
       - ./results:/app/results
       - ${MODEL_PATH:-./models}:/app/models
+      - /srv/DATA01/datasets:/srv/DATA01/datasets:ro
+      - /srv/DATA01/embeddings:/srv/DATA01/embeddings
       - ./.env:/app/.env  
     env_file:
       - .env
