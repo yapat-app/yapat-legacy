@@ -2,18 +2,22 @@ import os
 import glob
 import logging
 import librosa
+import soundfile as sf
 import tensorflow as tf
 import numpy as np
 
 def get_list_files(audio_path):
-    """Get list of audio files from directory."""
+    """Get list of audio files from directory and subdirectories."""
     if not os.path.exists(audio_path):
         raise FileNotFoundError(f"Audio path {audio_path} does not exist")
     
     exts = ['wav', 'WAV', 'mp3', 'MP3', 'ogg', 'OGG', 'flac', 'FLAC']
     files = []
     for ext in exts:
+        # Search in current directory
         files.extend(glob.glob(os.path.join(audio_path, f'*.{ext}')))
+        # Search in subdirectories recursively
+        files.extend(glob.glob(os.path.join(audio_path, f'**/*.{ext}'), recursive=True))
     return sorted(files)
 
 def split_single_audio(input_file, output_dir, clip_duration):
@@ -47,8 +51,8 @@ def split_single_audio(input_file, output_dir, clip_duration):
                 f"{base_name}_clip_{i:04d}.wav"
             )
             
-            # Save clip
-            librosa.output.write_wav(output_file, clip, sr)
+            # Save clip using soundfile (replacement for deprecated librosa.output.write_wav)
+            sf.write(output_file, clip, sr)
             
     except Exception as e:
         logging.error(f"Error processing {input_file}: {str(e)}")

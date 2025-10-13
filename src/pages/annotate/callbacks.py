@@ -122,6 +122,7 @@ def register_callbacks():
     @callback(
         Output('spectrogram', 'figure'),
         Output('spectrogram', 'relayoutData'),
+        Output('text_complete_file_name', 'children'),
         Input('project-content', 'data'),
         State('spectrogram', 'figure'),
         State('spectrogram', 'relayoutData'),
@@ -129,12 +130,13 @@ def register_callbacks():
     def update_spectrogram(data, fig, relayout_data):
         project_name = data.get('project_name')
         current_sample = data.get('current_sample')
+        filename = current_sample if current_sample else ''
         if project_name and current_sample:
             try:
                 fig, relayout_data = _update_spectrogram(current_sample, project_name)
             except Exception as e:
                 logger.error(f"Error updating spectrogram: {e}")
-        return fig, relayout_data
+        return fig, relayout_data, filename
 
     @callback(
         Output('audio_complete_file', 'src'),

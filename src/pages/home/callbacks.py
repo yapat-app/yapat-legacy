@@ -178,8 +178,19 @@ def gen_embeddings(project_name, embedding_model):
 )
 def update_options_project(project_value, project_create, brand, project_name, path_audio, embedding_model, data):
     if dash.ctx.triggered_id == 'button-project-create':
-        # dask_client.submit(register_dataset, dataset_name=project_name, path_audio=path_audio)
+        # Register the dataset in the database
         register_dataset(dataset_name=project_name, path_audio=path_audio)
+        
+        # Initialize the project (generate clips, tables, queue)
+        # Use default clip duration of 3.0 seconds
+        clip_duration = 3.0
+        try:
+            init_project(project_name, path_audio, clip_duration, embedding_model)
+            logger.info(f"Successfully initialized project '{project_name}' with clips")
+        except Exception as e:
+            logger.error(f"Failed to initialize project '{project_name}': {str(e)}")
+            # Note: Dataset is already registered in DB, but clips may not be generated
+        
         project_value = project_name
     elif data.get('project_name') and not project_value:
         project_value = data['project_name']
