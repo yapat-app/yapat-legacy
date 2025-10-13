@@ -45,10 +45,14 @@ def split_single_audio(input_file, output_dir, clip_duration):
             end_sample = (i + 1) * samples_per_clip
             clip = y[start_sample:end_sample]
             
-            # Create output filename
+            # Calculate start and end times in seconds
+            start_time = int(i * clip_duration)
+            end_time = int((i + 1) * clip_duration)
+            
+            # Create output filename with start and end times
             output_file = os.path.join(
                 output_dir,
-                f"{base_name}_clip_{i:04d}.wav"
+                f"{base_name}_{start_time}_{end_time}.wav"
             )
             
             # Save clip using soundfile (replacement for deprecated librosa.output.write_wav)
