@@ -1,0 +1,22 @@
+site_name: YAPAT
+site_description: Yet Another PAM Annotation Tool — Developer Documentation
+site_url: https://yapat.readthedocs.io/
+
+nav:
+  - Home: index.md
+  - API: backend-api.md
+  - Sampling Methods: feed-methods.md
+  - Frontend: frontend.md
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_source: true
+            show_root_heading: true
+
+
+theme:
+  name: mkdocs
