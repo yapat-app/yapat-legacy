@@ -32,6 +32,12 @@ def create_app(name='yapat', server=server, title='YAPAT | Yet Another PAM Annot
     login_manager.init_app(server)
     sqlalchemy_db.init_app(server)
 
+    # Add teardown handler to clean up database sessions
+    @server.teardown_appcontext
+    def shutdown_session(exception=None):
+        """Remove database sessions at the end of the request or when the application shuts down."""
+        sqlalchemy_db.session.remove()
+
     # Initialize the database
     from src.utils.init_db import init_db
     init_db(server)

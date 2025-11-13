@@ -88,12 +88,28 @@ logged_out_info = dbc.NavItem(
     Input('url-login', 'pathname')
 )
 def update_authentication_status(path):
-    logged_in = current_user.is_authenticated
-    if path == '/logout' and logged_in:
-        logout_user()
-        child = logged_out_info
-    elif logged_in:
-        child = logged_in_info(current_user.username)
-    else:
-        child = logged_out_info
-    return child
+    from src.extensions import sqlalchemy_db
+    
+    try:
+        logged_in = current_user.is_authenticated
+        if path == '/logout' and logged_in:
+            logout_user()
+            # Clean up the SQLAlchemy session after logout
+            sqlalchemy_db.session.remove()
+            child = logged_out_info
+        elif logged_in:
+            child = logged_in_info(current_user.username)
+        else:
+            child = logged_out_info
+        return child
+    except Exception as e:
+        # Log the error and return logged out info to prevent crash
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error in update_authentication_status: {e}")
+        # Clean up the session on error
+        try:
+            sqlalchemy_db.session.remove()
+        except:
+            pass
+        return logged_out_info
